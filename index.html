@@ -10,6 +10,7 @@
             --success: #27ae60;
             --error: #e74c3c;
             --accent: #3498db;
+            --neutral: #95a5a6;
         }
 
         body { 
@@ -20,14 +21,9 @@
             color: var(--primary);
         }
 
-        #quiz-container { 
-            max-width: 900px; 
-            margin: auto; 
-            padding: 15px; 
-        }
+        #quiz-container { max-width: 900px; margin: auto; padding: 15px; }
 
         .map-wrapper {
-            position: relative;
             background: #fff;
             padding: 10px;
             border-radius: 8px;
@@ -35,27 +31,17 @@
             margin-bottom: 20px;
         }
 
-        .map-wrapper img { 
-            width: 100%; 
-            height: auto; 
-            display: block;
-            border-radius: 4px;
-        }
+        .map-wrapper img { width: 100%; height: auto; border-radius: 4px; }
 
         #ui-box {
             background: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            min-height: 200px;
         }
 
-        h1 { font-size: 1.5rem; margin-bottom: 10px; }
-        
-        #question { 
-            font-size: 1.2rem; 
-            margin-bottom: 15px; 
-            color: var(--accent);
-        }
+        #question { font-size: 1.3rem; margin-bottom: 15px; font-weight: bold; }
 
         input { 
             padding: 12px; 
@@ -64,58 +50,52 @@
             max-width: 300px;
             border: 2px solid #ddd;
             border-radius: 5px;
-            outline: none;
+            margin-bottom: 10px;
         }
 
-        input:focus { border-color: var(--accent); }
-
-        .btn-group { margin-top: 15px; }
+        .btn-group { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
 
         button { 
-            padding: 12px 25px; 
+            padding: 12px 20px; 
             font-size: 16px; 
             font-weight: bold;
             cursor: pointer; 
             border: none;
             border-radius: 5px;
             transition: 0.2s;
-            margin: 5px;
         }
 
         .btn-submit { background: var(--accent); color: white; }
-        .btn-override { background: #95a5a6; color: white; display: none; }
+        .btn-override { background: var(--success); color: white; display: none; }
+        .btn-next { background: var(--neutral); color: white; display: none; }
         
         #feedback { 
             font-weight: bold; 
-            margin-top: 15px; 
-            min-height: 24px;
+            margin: 15px 0; 
             font-size: 1.1rem;
+            min-height: 1.2em;
         }
 
-        #score-board { margin-top: 10px; font-size: 0.9rem; color: #7f8c8d; }
-
-        @media (max-width: 600px) {
-            h1 { font-size: 1.2rem; }
-            input { width: 90%; }
-        }
+        #score-board { margin-top: 10px; font-size: 1rem; color: #7f8c8d; }
     </style>
 </head>
 <body>
 
 <div id="quiz-container">
-    <h1>Europe 1918 Geography Quiz</h1>
+    <h1>Europe 1918 Geography</h1>
     
     <div class="map-wrapper">
-        <img src="europe1918.png" alt="Map of Europe 1918">
+        <img src="map1918.jpg" alt="Map of Europe 1918">
     </div>
 
     <div id="ui-box">
-        <div id="question">Loading quiz...</div>
-        <input type="text" id="answerInput" placeholder="Type name here..." autocomplete="off">
+        <div id="question">Loading...</div>
+        <input type="text" id="answerInput" placeholder="Type name..." autocomplete="off">
         
         <div class="btn-group">
             <button class="btn-submit" id="submitBtn" onclick="checkAnswer()">Submit Answer</button>
             <button class="btn-override" id="overrideBtn" onclick="overrideResult()">I was right (Override)</button>
+            <button class="btn-next" id="nextBtn" onclick="nextQuestion(0)">I was wrong (Next)</button>
         </div>
 
         <div id="feedback"></div>
@@ -142,13 +122,13 @@
     let currentQuestionIndex = 0;
     let score = 0;
     let shuffledQuestions = [];
-    let canSubmit = true;
 
     const inputField = document.getElementById("answerInput");
     const feedbackField = document.getElementById("feedback");
+    const submitBtn = document.getElementById("submitBtn");
     const overrideBtn = document.getElementById("overrideBtn");
+    const nextBtn = document.getElementById("nextBtn");
 
-    // Start
     function startQuiz() {
         shuffledQuestions = [...quizData].sort(() => Math.random() - 0.5);
         currentQuestionIndex = 0;
@@ -158,8 +138,12 @@
     }
 
     function showQuestion() {
-        canSubmit = true;
+        // Reset UI
+        submitBtn.style.display = "inline-block";
         overrideBtn.style.display = "none";
+        nextBtn.style.display = "none";
+        inputField.disabled = false;
+        
         const q = shuffledQuestions[currentQuestionIndex];
         document.getElementById("question").innerText = "Identify Number: " + q.id;
         inputField.value = "";
@@ -168,59 +152,48 @@
     }
 
     function checkAnswer() {
-        if(!canSubmit) return;
-
         const userAnswer = inputField.value.trim().toLowerCase();
         const correctAnswer = shuffledQuestions[currentQuestionIndex].name.toLowerCase();
 
         if (userAnswer === correctAnswer) {
-            handleSuccess();
+            score++;
+            updateScoreBoard();
+            feedbackField.style.color = "var(--success)";
+            feedbackField.innerText = "Correct!";
+            hideControlsAndAdvance(1000);
         } else {
-            handleFailure();
+            // Show correction options
+            inputField.disabled = true;
+            submitBtn.style.display = "none";
+            overrideBtn.style.display = "inline-block";
+            nextBtn.style.display = "inline-block";
+            
+            feedbackField.style.color = "var(--error)";
+            feedbackField.innerText = "Incorrect. It was: " + shuffledQuestions[currentQuestionIndex].name;
         }
     }
 
-    function handleSuccess() {
-        score++;
-        canSubmit = false;
-        feedbackField.style.color = "var(--success)";
-        feedbackField.innerText = "Correct!";
-        updateScoreBoard();
-        nextQuestion();
-    }
-
-    function handleFailure() {
-        canSubmit = false;
-        feedbackField.style.color = "var(--error)";
-        feedbackField.innerText = "Incorrect. It was: " + shuffledQuestions[currentQuestionIndex].name;
-        overrideBtn.style.display = "inline-block"; // Show override option
-        
-        // Wait longer on failure so they can see the answer and decide to override
-        setTimeout(() => {
-            if (!overrideBtn.matches(':visible') && !canSubmit) {
-                // This auto-advances if they didn't click override quickly
-            }
-        }, 3000);
-    }
-
     function overrideResult() {
-        score++; // Give the point anyway
+        score++;
         updateScoreBoard();
         feedbackField.style.color = "var(--success)";
-        feedbackField.innerText = "Point added via override!";
+        feedbackField.innerText = "Point added.";
+        hideControlsAndAdvance(800);
+    }
+
+    function hideControlsAndAdvance(delay) {
         overrideBtn.style.display = "none";
-        nextQuestion();
+        nextBtn.style.display = "none";
+        setTimeout(() => nextQuestion(), delay);
     }
 
     function nextQuestion() {
-        setTimeout(() => {
-            currentQuestionIndex++;
-            if (currentQuestionIndex < shuffledQuestions.length) {
-                showQuestion();
-            } else {
-                showResults();
-            }
-        }, 1500);
+        currentQuestionIndex++;
+        if (currentQuestionIndex < shuffledQuestions.length) {
+            showQuestion();
+        } else {
+            showResults();
+        }
     }
 
     function updateScoreBoard() {
@@ -235,12 +208,7 @@
         `;
     }
 
-    // Allow "Enter" key to submit
-    inputField.addEventListener("keypress", function(event) {
-        if (event.key === "Enter") {
-            checkAnswer();
-        }
-    });
+    inputField.addEventListener("keypress", (e) => { if(e.key === "Enter") checkAnswer(); });
 
     startQuiz();
 </script>
