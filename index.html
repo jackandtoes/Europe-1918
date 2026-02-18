@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1918 Europe Map Quiz</title>
+    <title>1918 Europe Shape Quiz</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -21,7 +21,7 @@
             color: var(--primary);
         }
 
-        #quiz-container { max-width: 900px; margin: auto; padding: 15px; }
+        #quiz-container { max-width: 600px; margin: auto; padding: 15px; }
 
         .map-wrapper {
             background: #fff;
@@ -29,16 +29,25 @@
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             margin-bottom: 20px;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .map-wrapper img { width: 100%; height: auto; border-radius: 4px; }
+        /* This ensures different sized PNGs fit nicely */
+        #countryImage { 
+            max-width: 100%; 
+            max-height: 400px; 
+            height: auto; 
+            border-radius: 4px; 
+        }
 
         #ui-box {
             background: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            min-height: 200px;
         }
 
         #question { font-size: 1.3rem; margin-bottom: 15px; font-weight: bold; }
@@ -46,11 +55,12 @@
         input { 
             padding: 12px; 
             font-size: 18px; 
-            width: 80%; 
+            width: 85%; 
             max-width: 300px;
             border: 2px solid #ddd;
             border-radius: 5px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            text-align: center;
         }
 
         .btn-group { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
@@ -65,7 +75,7 @@
             transition: 0.2s;
         }
 
-        .btn-submit { background: var(--accent); color: white; }
+        .btn-submit { background: var(--accent); color: white; width: 100%; max-width: 325px; }
         .btn-override { background: var(--success); color: white; display: none; }
         .btn-next { background: var(--neutral); color: white; display: none; }
         
@@ -76,26 +86,26 @@
             min-height: 1.2em;
         }
 
-        #score-board { margin-top: 10px; font-size: 1rem; color: #7f8c8d; }
+        #score-board { margin-top: 15px; font-size: 1rem; color: #7f8c8d; }
     </style>
 </head>
 <body>
 
 <div id="quiz-container">
-    <h1>Europe 1918 Geography</h1>
+    <h1>1918 Europe: Identify the Area</h1>
     
     <div class="map-wrapper">
-        <img src="europe1918.png" alt="Map of Europe 1918">
+        <img id="countryImage" src="" alt="Loading area...">
     </div>
 
     <div id="ui-box">
-        <div id="question">Loading...</div>
+        <div id="question">What country or body of water is this?</div>
         <input type="text" id="answerInput" placeholder="Type name..." autocomplete="off">
         
         <div class="btn-group">
-            <button class="btn-submit" id="submitBtn" onclick="checkAnswer()">Submit Answer</button>
+            <button class="btn-submit" id="submitBtn" onclick="checkAnswer()">Submit</button>
             <button class="btn-override" id="overrideBtn" onclick="overrideResult()">I was right (Override)</button>
-            <button class="btn-next" id="nextBtn" onclick="nextQuestion(0)">I was wrong (Next)</button>
+            <button class="btn-next" id="nextBtn" onclick="nextQuestion()">I was wrong (Next)</button>
         </div>
 
         <div id="feedback"></div>
@@ -123,6 +133,7 @@
     let score = 0;
     let shuffledQuestions = [];
 
+    const imgElement = document.getElementById("countryImage");
     const inputField = document.getElementById("answerInput");
     const feedbackField = document.getElementById("feedback");
     const submitBtn = document.getElementById("submitBtn");
@@ -138,14 +149,16 @@
     }
 
     function showQuestion() {
-        // Reset UI
         submitBtn.style.display = "inline-block";
         overrideBtn.style.display = "none";
         nextBtn.style.display = "none";
         inputField.disabled = false;
         
         const q = shuffledQuestions[currentQuestionIndex];
-        document.getElementById("question").innerText = "Identify Number: " + q.id;
+        
+        // Updates the image to match the ID (e.g., "1.png")
+        imgElement.src = q.id + ".png";
+        
         inputField.value = "";
         feedbackField.innerText = "";
         inputField.focus();
@@ -162,7 +175,6 @@
             feedbackField.innerText = "Correct!";
             hideControlsAndAdvance(1000);
         } else {
-            // Show correction options
             inputField.disabled = true;
             submitBtn.style.display = "none";
             overrideBtn.style.display = "inline-block";
@@ -177,7 +189,7 @@
         score++;
         updateScoreBoard();
         feedbackField.style.color = "var(--success)";
-        feedbackField.innerText = "Point added.";
+        feedbackField.innerText = "Point added via override.";
         hideControlsAndAdvance(800);
     }
 
@@ -197,13 +209,13 @@
     }
 
     function updateScoreBoard() {
-        document.getElementById("score-board").innerText = `Score: ${score} / ${quizData.length}`;
+        document.getElementById("score-board").innerText = `Question: ${currentQuestionIndex + 1}/35 | Score: ${score}`;
     }
 
     function showResults() {
         document.getElementById("ui-box").innerHTML = `
             <h2>Quiz Complete!</h2>
-            <p style="font-size: 1.5rem;">Final Score: ${score} / ${quizData.length}</p>
+            <p style="font-size: 1.5rem;">Final Score: ${score} / 35</p>
             <button class="btn-submit" onclick="location.reload()">Restart Quiz</button>
         `;
     }
@@ -215,4 +227,3 @@
 
 </body>
 </html>
-
