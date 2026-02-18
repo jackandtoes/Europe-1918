@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1918 Europe Shape Quiz</title>
+    <title>1918 Europe Map Quiz</title>
     <style>
         :root {
             --primary: #2c3e50;
@@ -35,7 +35,6 @@
             justify-content: center;
         }
 
-        /* This ensures different sized PNGs fit nicely */
         #countryImage { 
             max-width: 100%; 
             max-height: 400px; 
@@ -99,7 +98,7 @@
     </div>
 
     <div id="ui-box">
-        <div id="question">What country or body of water is this?</div>
+        <div id="question">What country/body of water is this?</div>
         <input type="text" id="answerInput" placeholder="Type name..." autocomplete="off">
         
         <div class="btn-group">
@@ -156,7 +155,6 @@
         
         const q = shuffledQuestions[currentQuestionIndex];
         
-        // Updates the image to match the ID (e.g., "1.png")
         imgElement.src = q.id + ".png";
         
         inputField.value = "";
