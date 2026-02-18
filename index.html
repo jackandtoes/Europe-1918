@@ -29,18 +29,13 @@
             border-radius: 8px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             margin-bottom: 20px;
-            min-height: 300px;
+            min-height: 250px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        #countryImage { 
-            max-width: 100%; 
-            max-height: 400px; 
-            height: auto; 
-            border-radius: 4px; 
-        }
+        #countryImage { max-width: 100%; max-height: 350px; height: auto; border-radius: 4px; }
 
         #ui-box {
             background: white;
@@ -49,66 +44,72 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
 
-        #question { font-size: 1.3rem; margin-bottom: 15px; font-weight: bold; }
-
         input { 
-            padding: 12px; 
-            font-size: 18px; 
-            width: 85%; 
-            max-width: 300px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            text-align: center;
+            padding: 12px; font-size: 18px; width: 85%; max-width: 300px;
+            border: 2px solid #ddd; border-radius: 5px; margin-bottom: 15px; text-align: center;
         }
 
         .btn-group { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
 
-        button { 
-            padding: 12px 20px; 
-            font-size: 16px; 
-            font-weight: bold;
-            cursor: pointer; 
-            border: none;
-            border-radius: 5px;
-            transition: 0.2s;
-        }
+        button { padding: 12px 20px; font-size: 16px; font-weight: bold; cursor: pointer; border: none; border-radius: 5px; }
 
         .btn-submit { background: var(--accent); color: white; width: 100%; max-width: 325px; }
         .btn-override { background: var(--success); color: white; display: none; }
         .btn-next { background: var(--neutral); color: white; display: none; }
         
-        #feedback { 
-            font-weight: bold; 
-            margin: 15px 0; 
-            font-size: 1.1rem;
-            min-height: 1.2em;
-        }
+        #feedback { font-weight: bold; margin: 15px 0; min-height: 1.2em; }
+        #score-board { margin-top: 15px; font-size: 0.9rem; color: #7f8c8d; }
 
-        #score-board { margin-top: 15px; font-size: 1rem; color: #7f8c8d; }
+        /* Review Table Styles */
+        .review-table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; font-size: 0.9rem; }
+        .review-table th, .review-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .review-table th { background-color: #f8f9fa; }
+        .review-img { width: 40px; height: auto; border-radius: 2px; }
     </style>
 </head>
 <body>
 
 <div id="quiz-container">
-    <h1>1918 Europe: Identify the Area</h1>
+    <h1>1918 Europe Quiz</h1>
     
-    <div class="map-wrapper">
-        <img id="countryImage" src="" alt="Loading area...">
-    </div>
-
-    <div id="ui-box">
-        <div id="question">What country/body of water is this?</div>
-        <input type="text" id="answerInput" placeholder="Type name..." autocomplete="off">
-        
-        <div class="btn-group">
-            <button class="btn-submit" id="submitBtn" onclick="checkAnswer()">Submit</button>
-            <button class="btn-override" id="overrideBtn" onclick="overrideResult()">I was right (Override)</button>
-            <button class="btn-next" id="nextBtn" onclick="nextQuestion()">I was wrong (Next)</button>
+    <div id="game-area">
+        <div class="map-wrapper">
+            <img id="countryImage" src="" alt="Loading...">
         </div>
 
-        <div id="feedback"></div>
-        <div id="score-board">Score: 0 / 35</div>
+        <div id="ui-box">
+            <div id="question">What area is this?</div>
+            <input type="text" id="answerInput" placeholder="Type name..." autocomplete="off">
+            <div class="btn-group">
+                <button class="btn-submit" id="submitBtn" onclick="checkAnswer()">Submit</button>
+                <button class="btn-override" id="overrideBtn" onclick="overrideResult()">I was right (Override)</button>
+                <button class="btn-next" id="nextBtn" onclick="nextQuestion()">I was wrong (Next)</button>
+            </div>
+            <div id="feedback"></div>
+            <div id="score-board">Question: 1/35 | Score: 0</div>
+        </div>
+    </div>
+
+    <div id="results-area" style="display:none;">
+        <div id="ui-box">
+            <h2>Quiz Complete!</h2>
+            <p id="final-score" style="font-size: 1.5rem; font-weight: bold;"></p>
+            <button class="btn-submit" onclick="location.reload()">Try Again</button>
+            
+            <div id="review-section">
+                <h3>Review Mistakes</h3>
+                <table class="review-table" id="mistakes-table">
+                    <thead>
+                        <tr>
+                            <th>Map</th>
+                            <th>Correct Answer</th>
+                            <th>Your Answer</th>
+                        </tr>
+                    </thead>
+                    <tbody id="mistakes-body"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -131,6 +132,7 @@
     let currentQuestionIndex = 0;
     let score = 0;
     let shuffledQuestions = [];
+    let wrongAnswers = [];
 
     const imgElement = document.getElementById("countryImage");
     const inputField = document.getElementById("answerInput");
@@ -141,9 +143,6 @@
 
     function startQuiz() {
         shuffledQuestions = [...quizData].sort(() => Math.random() - 0.5);
-        currentQuestionIndex = 0;
-        score = 0;
-        updateScoreBoard();
         showQuestion();
     }
 
@@ -152,54 +151,55 @@
         overrideBtn.style.display = "none";
         nextBtn.style.display = "none";
         inputField.disabled = false;
-        
         const q = shuffledQuestions[currentQuestionIndex];
-        
         imgElement.src = q.id + ".png";
-        
         inputField.value = "";
         feedbackField.innerText = "";
         inputField.focus();
     }
 
     function checkAnswer() {
-        const userAnswer = inputField.value.trim().toLowerCase();
-        const correctAnswer = shuffledQuestions[currentQuestionIndex].name.toLowerCase();
+        const userAnswer = inputField.value.trim();
+        const correctAnswer = shuffledQuestions[currentQuestionIndex].name;
 
-        if (userAnswer === correctAnswer) {
+        if (userAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
             score++;
             updateScoreBoard();
             feedbackField.style.color = "var(--success)";
             feedbackField.innerText = "Correct!";
-            hideControlsAndAdvance(1000);
+            setTimeout(() => nextQuestion(), 1000);
         } else {
+            // Log mistake
+            wrongAnswers.push({
+                id: shuffledQuestions[currentQuestionIndex].id,
+                correct: correctAnswer,
+                user: userAnswer || "(skipped)"
+            });
+            
             inputField.disabled = true;
             submitBtn.style.display = "none";
             overrideBtn.style.display = "inline-block";
             nextBtn.style.display = "inline-block";
-            
             feedbackField.style.color = "var(--error)";
-            feedbackField.innerText = "Incorrect. It was: " + shuffledQuestions[currentQuestionIndex].name;
+            feedbackField.innerText = "Incorrect. It was: " + correctAnswer;
         }
     }
 
     function overrideResult() {
         score++;
+        wrongAnswers.pop();
         updateScoreBoard();
         feedbackField.style.color = "var(--success)";
         feedbackField.innerText = "Point added via override.";
-        hideControlsAndAdvance(800);
-    }
-
-    function hideControlsAndAdvance(delay) {
         overrideBtn.style.display = "none";
         nextBtn.style.display = "none";
-        setTimeout(() => nextQuestion(), delay);
+        setTimeout(() => nextQuestion(), 800);
     }
 
     function nextQuestion() {
         currentQuestionIndex++;
         if (currentQuestionIndex < shuffledQuestions.length) {
+            updateScoreBoard();
             showQuestion();
         } else {
             showResults();
@@ -211,15 +211,26 @@
     }
 
     function showResults() {
-        document.getElementById("ui-box").innerHTML = `
-            <h2>Quiz Complete!</h2>
-            <p style="font-size: 1.5rem;">Final Score: ${score} / 35</p>
-            <button class="btn-submit" onclick="location.reload()">Restart Quiz</button>
-        `;
+        document.getElementById("game-area").style.display = "none";
+        document.getElementById("results-area").style.display = "block";
+        document.getElementById("final-score").innerText = `Final Score: ${score} / 35`;
+
+        const tbody = document.getElementById("mistakes-body");
+        if (wrongAnswers.length === 0) {
+            document.getElementById("review-section").innerHTML = "<h3>Perfect Score! No mistakes to review.</h3>";
+        } else {
+            wrongAnswers.forEach(item => {
+                const row = `<tr>
+                    <td><img src="${item.id}.png" class="review-img"></td>
+                    <td>${item.correct}</td>
+                    <td style="color:var(--error)">${item.user}</td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
     }
 
     inputField.addEventListener("keypress", (e) => { if(e.key === "Enter") checkAnswer(); });
-
     startQuiz();
 </script>
 
