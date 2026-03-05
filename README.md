@@ -1,1 +1,1 @@
-https://jackandtoes.github.io/europe-1918/
+https://jackandtoes.github.io/Europe-1918/
